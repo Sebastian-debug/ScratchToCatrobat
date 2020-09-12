@@ -2984,140 +2984,115 @@ class TestConvertProjects(common_testing.ProjectTestCase):
 
     def _setup_media_converter_unconverted_media_resources(self, media_converter):
         progress_bar = None
-        all_used_resources = []
-        unconverted_media_resources = []
-        converted_media_resources_paths = set()
-
         for scratch_object in media_converter.scratch_project.objects:
-            media_converter.setup_costume_info(scratch_object, all_used_resources, unconverted_media_resources,
-                                               converted_media_resources_paths, progress_bar)
-        return unconverted_media_resources
+            media_converter.setup_costume_info(scratch_object,
+                                               progress_bar)
 
     def _setup_media_converter_new_src_path(self, media_converter):
-        test_unconv_media_res = self._setup_media_converter_unconverted_media_resources(media_converter)
-        return media_converter.conversion_svgtopng_wav(test_unconv_media_res, None)
+        self._setup_media_converter_unconverted_media_resources(media_converter)
+        return media_converter.conversion_svgtopng_wav(None)
 
     def _setup_media_converter_all_used_resources(self, media_converter):
         progress_bar = None
-        all_used_resources = []
-        unconverted_media_resources = []
-        converted_media_resources_paths = set()
 
         for scratch_object in media_converter.scratch_project.objects:
-            media_converter.setup_costume_info(scratch_object, all_used_resources, unconverted_media_resources,
-                                           converted_media_resources_paths, progress_bar)
+            media_converter.setup_costume_info(scratch_object,
+                                               progress_bar)
         for scratch_object in media_converter.scratch_project.objects:
-            media_converter.setup_sound_info(scratch_object, all_used_resources, unconverted_media_resources,
-                                             converted_media_resources_paths, progress_bar)
-        return all_used_resources
+            media_converter.setup_sound_info(scratch_object,
+                                             progress_bar)
 
 
 
     def test_media_converter_setup_costume_info(self):
         media_converter = self._setup_media_converter()
         progress_bar = None
-        all_used_resources = []
-        unconverted_media_resources = []
-        converted_media_resources_paths = set()
 
         for scratch_object in media_converter.scratch_project.objects:
-            media_converter.setup_costume_info(scratch_object, all_used_resources, unconverted_media_resources,
-                                               converted_media_resources_paths, progress_bar)
+            media_converter.setup_costume_info(scratch_object,
+                                               progress_bar)
 
         assert progress_bar is None
-        assert not converted_media_resources_paths
-        assert len(unconverted_media_resources)
-        for val in unconverted_media_resources:
+        assert not media_converter.resources.converted_media_resources_paths
+        assert len(media_converter.resources.unconverted_media_resources)
+        for val in media_converter.resources.unconverted_media_resources:
             assert val['media_type'] == 3
-        assert len(all_used_resources)
+        assert len(media_converter.resources.all_used_resources)
 
     def test_media_converter_setup_sound_info(self):
         media_converter = self._setup_media_converter()
         progress_bar = None
-        all_used_resources = []
-        unconverted_media_resources = []
-        converted_media_resources_paths = set()
 
         for scratch_object in media_converter.scratch_project.objects:
-            media_converter.setup_sound_info(scratch_object, all_used_resources, unconverted_media_resources,
-                                             converted_media_resources_paths, progress_bar)
+            media_converter.setup_sound_info(scratch_object,
+                                             progress_bar)
         assert progress_bar is None
-        assert not converted_media_resources_paths
+        assert not media_converter.resources.converted_media_resources_paths
         #since it is android_compatible_wav
-        assert len(unconverted_media_resources) == 0
-        assert len(all_used_resources)
+        assert len(media_converter.resources.unconverted_media_resources) == 0
+        assert len(media_converter.resources.all_used_resources)
 
     def test_media_converter_setup_resource_info_dict_costume(self):
         progress_bar = None
-        all_used_resources = []
-        unconverted_media_resources = []
-        converted_media_resources_paths = set()
         media_converter = self._setup_media_converter()
         threads = []
         defined_scratch_object = media_converter.scratch_project.objects[0]
         costume_info = defined_scratch_object.get_costumes()[0]
-        costume_dict = media_converter.get_info(costume_info["baseLayerMD5"], True)
-        assert os.path.exists(costume_dict["costume_src_path"]), "Not existing: {}".format(costume_dict["costume_src_path"])
+        costume_dict = media_converter.get_info(costume_info["baseLayerMD5"])
+        assert os.path.exists(costume_dict["src_path"]), "Not existing: {}".format(costume_dict["src_path"])
         assert costume_dict["file_ext"] in {".png", ".svg", ".jpg", ".gif"}, \
-                    "Unsupported image file extension: %s" % costume_dict["costume_src_path"]
+                    "Unsupported image file extension: %s" % costume_dict["src_path"]
         ispng = costume_dict["file_ext"] == ".png"
         is_unconverted = costume_dict["file_ext"] == ".svg"
-        media_converter.setup_resource_info_dict(costume_dict["costume_file_name"], costume_dict["costume_src_path"], is_unconverted, costume_info,
-                                              all_used_resources, unconverted_media_resources, converted_media_resources_paths,
-                                              progress_bar, threads, ispng, True)
+        media_converter.setup_resource_info_dict(costume_dict["file_name"], costume_dict["src_path"], is_unconverted, costume_info,
+                                                 progress_bar, threads, ispng, True)
         assert progress_bar is None
-        assert not converted_media_resources_paths
-        assert len(unconverted_media_resources) == 0
-        assert len(all_used_resources)
+        assert not media_converter.resources.converted_media_resources_paths
+        assert len(media_converter.resources.unconverted_media_resources) == 0
+        assert len(media_converter.resources.all_used_resources)
 
     def test_media_converter_setup_resource_info_dict_sound(self):
         progress_bar = None
-        all_used_resources = []
-        unconverted_media_resources = []
-        converted_media_resources_paths = set()
         media_converter = self._setup_media_converter()
         defined_scratch_object = media_converter.scratch_project.objects[0]
         sound_info = defined_scratch_object.get_sounds()[0]
         sound_dict = media_converter.get_info(sound_info["md5"])
-        assert os.path.exists(sound_dict["sound_src_path"]), "Not existing: {}".format(sound_dict["sound_src_path"])
-        assert sound_dict["file_ext"] in {".wav", ".mp3"}, "Unsupported sound file extension: %s" % sound_dict["sound_src_path"]
-        is_unconverted = sound_dict["file_ext"] == ".wav" and not wavconverter.is_android_compatible_wav(sound_dict["sound_src_path"])
-        media_converter.setup_resource_info_dict(sound_dict["sound_file_name"], sound_dict["sound_src_path"], is_unconverted, sound_info,
-                                      all_used_resources, unconverted_media_resources, converted_media_resources_paths,
-                                      progress_bar, [])
+        assert os.path.exists(sound_dict["src_path"]), "Not existing: {}".format(sound_dict["src_path"])
+        assert sound_dict["file_ext"] in {".wav", ".mp3"}, "Unsupported sound file extension: %s" % sound_dict["src_path"]
+        is_unconverted = sound_dict["file_ext"] == ".wav" and not wavconverter.is_android_compatible_wav(sound_dict["src_path"])
+        media_converter.setup_resource_info_dict(sound_dict["file_name"], sound_dict["src_path"], is_unconverted, sound_info,
+                                                 progress_bar, [])
         assert progress_bar is None
-        assert not converted_media_resources_paths
-        assert len(unconverted_media_resources) == 0
-        assert len(all_used_resources)
+        assert not media_converter.resources.converted_media_resources_paths
+        assert len(media_converter.resources.unconverted_media_resources) == 0
+        assert len(media_converter.resources.all_used_resources)
 
     def test_media_converter_get_info(self):
         media_converter = self._setup_media_converter()
         defined_scratch_object = media_converter.scratch_project.objects[0]
         costume_info = defined_scratch_object.get_costumes()[0]
-        costume_dict = media_converter.get_info(costume_info["baseLayerMD5"], True)
-        assert os.path.exists(costume_dict["costume_src_path"]), "Not existing: {}".format(costume_dict["costume_src_path"])
+        costume_dict = media_converter.get_info(costume_info["baseLayerMD5"])
+        assert os.path.exists(costume_dict["src_path"]), "Not existing: {}".format(costume_dict["src_path"])
         assert costume_dict["file_ext"] in {".png", ".svg", ".jpg", ".gif"}, \
-        "Unsupported image file extension: %s" % costume_dict["costume_src_path"]
+        "Unsupported image file extension: %s" % costume_dict["src_path"]
 
         sound_info = defined_scratch_object.get_sounds()[0]
         sound_dict = media_converter.get_info(sound_info["md5"])
-        assert os.path.exists(sound_dict["sound_src_path"]), "Not existing: {}".format(sound_dict["sound_src_path"])
-        assert sound_dict["file_ext"] in {".wav", ".mp3"}, "Unsupported sound file extension: %s" % sound_dict["sound_src_path"]
+        assert os.path.exists(sound_dict["src_path"]), "Not existing: {}".format(sound_dict["src_path"])
+        assert sound_dict["file_ext"] in {".wav", ".mp3"}, "Unsupported sound file extension: %s" % sound_dict["src_path"]
 
     def test_media_converter_conversion_svgtopng_wav(self):
         media_converter = self._setup_media_converter()
-        test_unconv_media_res = self._setup_media_converter_unconverted_media_resources(media_converter)
-        new_src_paths = media_converter.conversion_svgtopng_wav(test_unconv_media_res, None)
+        self._setup_media_converter_unconverted_media_resources(media_converter)
+        new_src_paths = media_converter.conversion_svgtopng_wav(None)
         assert len(new_src_paths) > 0
 
     def test_resource_info_setup(self):
         media_converter = self._setup_media_converter()
-        test_unconv_media_res = set()
         test_new_src_path = self._setup_media_converter_new_src_path(media_converter)
-        all_used_resources = self._setup_media_converter_all_used_resources(media_converter)
         duplicate_filename_set = set()
-        media_converter.resource_info_setup(all_used_resources, duplicate_filename_set, test_new_src_path, test_unconv_media_res)
-        assert len(test_unconv_media_res) > 0
+        media_converter.resource_info_setup(duplicate_filename_set, test_new_src_path)
+        assert len(media_converter.resources.converted_media_resources_paths) > 0
 
     def _test_mouse_pointer_tracking_workaround(self, catrobat_program):
         scene = catrobat_program.getDefaultScene()
